@@ -1,0 +1,1583 @@
+
+> Dataset <- read.table("F:/卒論プログラム３/record_shs_1-3_p=10.090.0.txt", header=TRUE, 
++   stringsAsFactors=TRUE, sep="", na.strings="NA", dec=".", strip.white=TRUE)
+
+> Dataset <- within(Dataset, {
++   snr <- as.factor(snr)
++ })
+
+> library(mvtnorm, pos=16)
+
+> library(survival, pos=16)
+
+> library(MASS, pos=16)
+
+> library(TH.data, pos=16)
+
+> library(multcomp, pos=16)
+
+> library(abind, pos=21)
+
+> AnovaModel.1 <- aov(shs_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.1)
+            Df   Sum Sq   Mean Sq F value Pr(>F)    
+snr          5 0.005685 0.0011371     109 <2e-16 ***
+Residuals   54 0.000563 0.0000104                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(shs_ratio, groups=snr, statistics=c("mean", "sd")))
+         mean          sd data:n
+-30 0.1003308 0.001597257     10
+-25 0.1003308 0.001741109     10
+-20 0.1018008 0.002100506     10
+-15 0.1019846 0.002767885     10
+-10 0.1083793 0.005152308     10
+-5  0.1276369 0.004289564     10
+
+> local({
++   .Pairs <- glht(AnovaModel.1, linfct = mcp(snr = "Tukey"))
++   print(summary(.Pairs)) # pairwise tests
++   print(confint(.Pairs, level=0.95)) # confidence intervals
++   print(cld(.Pairs, level=0.05)) # compact letter display
++   old.oma <- par(oma=c(0, 5, 0, 0))
++   plot(confint(.Pairs))
++   par(old.oma)
++ })
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = shs_ratio ~ snr, data = Dataset)
+
+Linear Hypotheses:
+                Estimate Std. Error t value Pr(>|t|)    
+-25 - -30 == 0 1.059e-17  1.445e-03   0.000 1.000000    
+-20 - -30 == 0 1.470e-03  1.445e-03   1.018 0.910032    
+-15 - -30 == 0 1.654e-03  1.445e-03   1.145 0.860271    
+-10 - -30 == 0 8.049e-03  1.445e-03   5.572 < 0.0001 ***
+-5 - -30 == 0  2.731e-02  1.445e-03  18.903 < 0.0001 ***
+-20 - -25 == 0 1.470e-03  1.445e-03   1.018 0.910023    
+-15 - -25 == 0 1.654e-03  1.445e-03   1.145 0.860285    
+-10 - -25 == 0 8.049e-03  1.445e-03   5.572 < 0.0001 ***
+-5 - -25 == 0  2.731e-02  1.445e-03  18.903 < 0.0001 ***
+-15 - -20 == 0 1.838e-04  1.445e-03   0.127 0.999995    
+-10 - -20 == 0 6.578e-03  1.445e-03   4.554 0.000441 ***
+-5 - -20 == 0  2.584e-02  1.445e-03  17.885 < 0.0001 ***
+-10 - -15 == 0 6.395e-03  1.445e-03   4.427 0.000633 ***
+-5 - -15 == 0  2.565e-02  1.445e-03  17.758 < 0.0001 ***
+-5 - -10 == 0  1.926e-02  1.445e-03  13.331 < 0.0001 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+(Adjusted p values reported -- single-step method)
+
+
+	 Simultaneous Confidence Intervals
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = shs_ratio ~ snr, data = Dataset)
+
+Quantile = 2.9548
+95% family-wise confidence level
+ 
+
+Linear Hypotheses:
+               Estimate   lwr        upr       
+-25 - -30 == 0  1.059e-17 -4.268e-03  4.268e-03
+-20 - -30 == 0  1.470e-03 -2.798e-03  5.738e-03
+-15 - -30 == 0  1.654e-03 -2.615e-03  5.922e-03
+-10 - -30 == 0  8.049e-03  3.780e-03  1.232e-02
+-5 - -30 == 0   2.731e-02  2.304e-02  3.157e-02
+-20 - -25 == 0  1.470e-03 -2.798e-03  5.738e-03
+-15 - -25 == 0  1.654e-03 -2.615e-03  5.922e-03
+-10 - -25 == 0  8.049e-03  3.780e-03  1.232e-02
+-5 - -25 == 0   2.731e-02  2.304e-02  3.157e-02
+-15 - -20 == 0  1.838e-04 -4.085e-03  4.452e-03
+-10 - -20 == 0  6.578e-03  2.310e-03  1.085e-02
+-5 - -20 == 0   2.584e-02  2.157e-02  3.010e-02
+-10 - -15 == 0  6.395e-03  2.126e-03  1.066e-02
+-5 - -15 == 0   2.565e-02  2.138e-02  2.992e-02
+-5 - -10 == 0   1.926e-02  1.499e-02  2.353e-02
+
+-30 -25 -20 -15 -10  -5 
+"a" "a" "a" "a" "b" "c" 
+
+> AnovaModel.2 <- aov(shs_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.2)
+            Df   Sum Sq   Mean Sq F value Pr(>F)    
+snr          5 0.005685 0.0011371     109 <2e-16 ***
+Residuals   54 0.000563 0.0000104                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(shs_ratio, groups=snr, statistics=c("mean", "sd")))
+         mean          sd data:n
+-30 0.1003308 0.001597257     10
+-25 0.1003308 0.001741109     10
+-20 0.1018008 0.002100506     10
+-15 0.1019846 0.002767885     10
+-10 0.1083793 0.005152308     10
+-5  0.1276369 0.004289564     10
+
+> oneway.test(shs_ratio ~ snr, data=Dataset) # Welch test
+
+	One-way analysis of means (not assuming equal variances)
+
+data:  shs_ratio and snr
+F = 70.678, num df = 5.000, denom df = 24.738, p-value = 7.734e-14
+
+
+> Dataset <- read.table("F:/卒論プログラム３/record_shs_1-3_p=5.095.0.txt", header=TRUE, 
++   stringsAsFactors=TRUE, sep="", na.strings="NA", dec=".", strip.white=TRUE)
+
+> Dataset <- within(Dataset, {
++   snr <- as.factor(snr)
++ })
+
+> AnovaModel.3 <- aov(shs_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.3)
+            Df   Sum Sq   Mean Sq F value Pr(>F)    
+snr          5 0.004034 0.0008068   110.9 <2e-16 ***
+Residuals   54 0.000393 0.0000073                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(shs_ratio, groups=snr, statistics=c("mean", "sd")))
+          mean          sd data:n
+-30 0.05020213 0.001759969     10
+-25 0.05005513 0.001468005     10
+-20 0.05086365 0.001451556     10
+-15 0.05119441 0.002745019     10
+-10 0.05604557 0.002523998     10
+-5  0.07298787 0.004732524     10
+
+> local({
++   .Pairs <- glht(AnovaModel.3, linfct = mcp(snr = "Tukey"))
++   print(summary(.Pairs)) # pairwise tests
++   print(confint(.Pairs, level=0.95)) # confidence intervals
++   print(cld(.Pairs, level=0.05)) # compact letter display
++   old.oma <- par(oma=c(0, 5, 0, 0))
++   plot(confint(.Pairs))
++   par(old.oma)
++ })
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = shs_ratio ~ snr, data = Dataset)
+
+Linear Hypotheses:
+                 Estimate Std. Error t value Pr(>|t|)    
+-25 - -30 == 0 -0.0001470  0.0012064  -0.122 0.999996    
+-20 - -30 == 0  0.0006615  0.0012064   0.548 0.993791    
+-15 - -30 == 0  0.0009923  0.0012064   0.823 0.962083    
+-10 - -30 == 0  0.0058434  0.0012064   4.844 0.000155 ***
+-5 - -30 == 0   0.0227857  0.0012064  18.887 < 0.0001 ***
+-20 - -25 == 0  0.0008085  0.0012064   0.670 0.984480    
+-15 - -25 == 0  0.0011393  0.0012064   0.944 0.932973    
+-10 - -25 == 0  0.0059904  0.0012064   4.966 < 0.0001 ***
+-5 - -25 == 0   0.0229327  0.0012064  19.009 < 0.0001 ***
+-15 - -20 == 0  0.0003308  0.0012064   0.274 0.999778    
+-10 - -20 == 0  0.0051819  0.0012064   4.295 0.001034 ** 
+-5 - -20 == 0   0.0221242  0.0012064  18.339 < 0.0001 ***
+-10 - -15 == 0  0.0048512  0.0012064   4.021 0.002416 ** 
+-5 - -15 == 0   0.0217935  0.0012064  18.065 < 0.0001 ***
+-5 - -10 == 0   0.0169423  0.0012064  14.044 < 0.0001 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+(Adjusted p values reported -- single-step method)
+
+
+	 Simultaneous Confidence Intervals
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = shs_ratio ~ snr, data = Dataset)
+
+Quantile = 2.954
+95% family-wise confidence level
+ 
+
+Linear Hypotheses:
+               Estimate   lwr        upr       
+-25 - -30 == 0 -0.0001470 -0.0037107  0.0034167
+-20 - -30 == 0  0.0006615 -0.0029022  0.0042252
+-15 - -30 == 0  0.0009923 -0.0025714  0.0045560
+-10 - -30 == 0  0.0058434  0.0022797  0.0094071
+-5 - -30 == 0   0.0227857  0.0192220  0.0263494
+-20 - -25 == 0  0.0008085 -0.0027552  0.0043722
+-15 - -25 == 0  0.0011393 -0.0024244  0.0047030
+-10 - -25 == 0  0.0059904  0.0024267  0.0095542
+-5 - -25 == 0   0.0229327  0.0193690  0.0264965
+-15 - -20 == 0  0.0003308 -0.0032329  0.0038945
+-10 - -20 == 0  0.0051819  0.0016182  0.0087456
+-5 - -20 == 0   0.0221242  0.0185605  0.0256879
+-10 - -15 == 0  0.0048512  0.0012875  0.0084149
+-5 - -15 == 0   0.0217935  0.0182298  0.0253572
+-5 - -10 == 0   0.0169423  0.0133786  0.0205060
+
+-30 -25 -20 -15 -10  -5 
+"a" "a" "a" "a" "b" "c" 
+
+> AnovaModel.4 <- aov(shs_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.4)
+            Df   Sum Sq   Mean Sq F value Pr(>F)    
+snr          5 0.004034 0.0008068   110.9 <2e-16 ***
+Residuals   54 0.000393 0.0000073                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(shs_ratio, groups=snr, statistics=c("mean", "sd")))
+          mean          sd data:n
+-30 0.05020213 0.001759969     10
+-25 0.05005513 0.001468005     10
+-20 0.05086365 0.001451556     10
+-15 0.05119441 0.002745019     10
+-10 0.05604557 0.002523998     10
+-5  0.07298787 0.004732524     10
+
+> oneway.test(shs_ratio ~ snr, data=Dataset) # Welch test
+
+	One-way analysis of means (not assuming equal variances)
+
+data:  shs_ratio and snr
+F = 46.123, num df = 5.000, denom df = 24.815, p-value = 9.006e-12
+
+
+> Dataset <- read.table("F:/卒論プログラム３/record_shs_1-3_p=1.099.0.txt", header=TRUE, 
++   stringsAsFactors=TRUE, sep="", na.strings="NA", dec=".", strip.white=TRUE)
+
+> Dataset <- within(Dataset, {
++   snr <- as.factor(snr)
++ })
+
+> AnovaModel.5 <- aov(shs_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.5)
+            Df    Sum Sq    Mean Sq F value Pr(>F)    
+snr          5 0.0012310 0.00024619   100.9 <2e-16 ***
+Residuals   54 0.0001318 0.00000244                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(shs_ratio, groups=snr, statistics=c("mean", "sd")))
+          mean           sd data:n
+-30 0.01029033 0.0004243662     10
+-25 0.01029033 0.0010957089     10
+-20 0.01025358 0.0011550508     10
+-15 0.01109886 0.0016689341     10
+-10 0.01198089 0.0023126987     10
+-5  0.02282249 0.0019481600     10
+
+> local({
++   .Pairs <- glht(AnovaModel.5, linfct = mcp(snr = "Tukey"))
++   print(summary(.Pairs)) # pairwise tests
++   print(confint(.Pairs, level=0.95)) # confidence intervals
++   print(cld(.Pairs, level=0.05)) # compact letter display
++   old.oma <- par(oma=c(0, 5, 0, 0))
++   plot(confint(.Pairs))
++   par(old.oma)
++ })
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = shs_ratio ~ snr, data = Dataset)
+
+Linear Hypotheses:
+                 Estimate Std. Error t value Pr(>|t|)    
+-25 - -30 == 0  7.610e-18  6.987e-04   0.000    1.000    
+-20 - -30 == 0 -3.675e-05  6.987e-04  -0.053    1.000    
+-15 - -30 == 0  8.085e-04  6.987e-04   1.157    0.855    
+-10 - -30 == 0  1.691e-03  6.987e-04   2.420    0.168    
+-5 - -30 == 0   1.253e-02  6.987e-04  17.937   <0.001 ***
+-20 - -25 == 0 -3.675e-05  6.987e-04  -0.053    1.000    
+-15 - -25 == 0  8.085e-04  6.987e-04   1.157    0.855    
+-10 - -25 == 0  1.691e-03  6.987e-04   2.420    0.168    
+-5 - -25 == 0   1.253e-02  6.987e-04  17.937   <0.001 ***
+-15 - -20 == 0  8.453e-04  6.987e-04   1.210    0.830    
+-10 - -20 == 0  1.727e-03  6.987e-04   2.472    0.151    
+-5 - -20 == 0   1.257e-02  6.987e-04  17.990   <0.001 ***
+-10 - -15 == 0  8.820e-04  6.987e-04   1.262    0.804    
+-5 - -15 == 0   1.172e-02  6.987e-04  16.780   <0.001 ***
+-5 - -10 == 0   1.084e-02  6.987e-04  15.518   <0.001 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+(Adjusted p values reported -- single-step method)
+
+
+	 Simultaneous Confidence Intervals
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = shs_ratio ~ snr, data = Dataset)
+
+Quantile = 2.9547
+95% family-wise confidence level
+ 
+
+Linear Hypotheses:
+               Estimate   lwr        upr       
+-25 - -30 == 0  7.610e-18 -2.064e-03  2.064e-03
+-20 - -30 == 0 -3.675e-05 -2.101e-03  2.028e-03
+-15 - -30 == 0  8.085e-04 -1.256e-03  2.873e-03
+-10 - -30 == 0  1.691e-03 -3.738e-04  3.755e-03
+-5 - -30 == 0   1.253e-02  1.047e-02  1.460e-02
+-20 - -25 == 0 -3.675e-05 -2.101e-03  2.028e-03
+-15 - -25 == 0  8.085e-04 -1.256e-03  2.873e-03
+-10 - -25 == 0  1.691e-03 -3.738e-04  3.755e-03
+-5 - -25 == 0   1.253e-02  1.047e-02  1.460e-02
+-15 - -20 == 0  8.453e-04 -1.219e-03  2.910e-03
+-10 - -20 == 0  1.727e-03 -3.370e-04  3.792e-03
+-5 - -20 == 0   1.257e-02  1.050e-02  1.463e-02
+-10 - -15 == 0  8.820e-04 -1.182e-03  2.946e-03
+-5 - -15 == 0   1.172e-02  9.659e-03  1.379e-02
+-5 - -10 == 0   1.084e-02  8.777e-03  1.291e-02
+
+-30 -25 -20 -15 -10  -5 
+"a" "a" "a" "a" "a" "b" 
+
+> AnovaModel.6 <- aov(shs_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.6)
+            Df    Sum Sq    Mean Sq F value Pr(>F)    
+snr          5 0.0012310 0.00024619   100.9 <2e-16 ***
+Residuals   54 0.0001318 0.00000244                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(shs_ratio, groups=snr, statistics=c("mean", "sd")))
+          mean           sd data:n
+-30 0.01029033 0.0004243662     10
+-25 0.01029033 0.0010957089     10
+-20 0.01025358 0.0011550508     10
+-15 0.01109886 0.0016689341     10
+-10 0.01198089 0.0023126987     10
+-5  0.02282249 0.0019481600     10
+
+> oneway.test(shs_ratio ~ snr, data=Dataset) # Welch test
+
+	One-way analysis of means (not assuming equal variances)
+
+data:  shs_ratio and snr
+F = 72.234, num df = 5.000, denom df = 23.271, p-value = 2.147e-13
+
+
+> Dataset <- read.table("F:/卒論プログラム３/record_shs_2-3_p=5.095.0.txt", header=TRUE, 
++   stringsAsFactors=TRUE, sep="", na.strings="NA", dec=".", strip.white=TRUE)
+
+> Dataset <- within(Dataset, {
++   snr <- as.factor(snr)
++ })
+
+> AnovaModel.7 <- aov(shs_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.7)
+            Df   Sum Sq   Mean Sq F value Pr(>F)    
+snr          5 0.004374 0.0008748   55.33 <2e-16 ***
+Residuals   54 0.000854 0.0000158                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(shs_ratio, groups=snr, statistics=c("mean", "sd")))
+          mean          sd data:n
+-30 0.04935685 0.005811003     10
+-25 0.05056964 0.002260190     10
+-20 0.05064315 0.003304430     10
+-15 0.05167218 0.003297155     10
+-10 0.05391400 0.003728028     10
+-5  0.07383315 0.004505916     10
+
+> local({
++   .Pairs <- glht(AnovaModel.7, linfct = mcp(snr = "Tukey"))
++   print(summary(.Pairs)) # pairwise tests
++   print(confint(.Pairs, level=0.95)) # confidence intervals
++   print(cld(.Pairs, level=0.05)) # compact letter display
++   old.oma <- par(oma=c(0, 5, 0, 0))
++   plot(confint(.Pairs))
++   par(old.oma)
++ })
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = shs_ratio ~ snr, data = Dataset)
+
+Linear Hypotheses:
+                Estimate Std. Error t value Pr(>|t|)    
+-25 - -30 == 0 0.0012128  0.0017783   0.682    0.983    
+-20 - -30 == 0 0.0012863  0.0017783   0.723    0.978    
+-15 - -30 == 0 0.0023153  0.0017783   1.302    0.783    
+-10 - -30 == 0 0.0045572  0.0017783   2.563    0.125    
+-5 - -30 == 0  0.0244763  0.0017783  13.764   <0.001 ***
+-20 - -25 == 0 0.0000735  0.0017783   0.041    1.000    
+-15 - -25 == 0 0.0011025  0.0017783   0.620    0.989    
+-10 - -25 == 0 0.0033444  0.0017783   1.881    0.425    
+-5 - -25 == 0  0.0232635  0.0017783  13.082   <0.001 ***
+-15 - -20 == 0 0.0010290  0.0017783   0.579    0.992    
+-10 - -20 == 0 0.0032709  0.0017783   1.839    0.450    
+-5 - -20 == 0  0.0231900  0.0017783  13.041   <0.001 ***
+-10 - -15 == 0 0.0022418  0.0017783   1.261    0.805    
+-5 - -15 == 0  0.0221610  0.0017783  12.462   <0.001 ***
+-5 - -10 == 0  0.0199192  0.0017783  11.201   <0.001 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+(Adjusted p values reported -- single-step method)
+
+
+	 Simultaneous Confidence Intervals
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = shs_ratio ~ snr, data = Dataset)
+
+Quantile = 2.9562
+95% family-wise confidence level
+ 
+
+Linear Hypotheses:
+               Estimate   lwr        upr       
+-25 - -30 == 0  0.0012128 -0.0040441  0.0064696
+-20 - -30 == 0  0.0012863 -0.0039706  0.0065432
+-15 - -30 == 0  0.0023153 -0.0029415  0.0075722
+-10 - -30 == 0  0.0045571 -0.0006997  0.0098140
+-5 - -30 == 0   0.0244763  0.0192194  0.0297332
+-20 - -25 == 0  0.0000735 -0.0051834  0.0053304
+-15 - -25 == 0  0.0011025 -0.0041543  0.0063594
+-10 - -25 == 0  0.0033444 -0.0019125  0.0086012
+-5 - -25 == 0   0.0232635  0.0180066  0.0285204
+-15 - -20 == 0  0.0010290 -0.0042278  0.0062859
+-10 - -20 == 0  0.0032709 -0.0019860  0.0085277
+-5 - -20 == 0   0.0231900  0.0179331  0.0284469
+-10 - -15 == 0  0.0022418 -0.0030150  0.0074987
+-5 - -15 == 0   0.0221610  0.0169041  0.0274178
+-5 - -10 == 0   0.0199191  0.0146623  0.0251760
+
+-30 -25 -20 -15 -10  -5 
+"a" "a" "a" "a" "a" "b" 
+
+> AnovaModel.8 <- aov(shs_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.8)
+            Df   Sum Sq   Mean Sq F value Pr(>F)    
+snr          5 0.004374 0.0008748   55.33 <2e-16 ***
+Residuals   54 0.000854 0.0000158                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(shs_ratio, groups=snr, statistics=c("mean", "sd")))
+          mean          sd data:n
+-30 0.04935685 0.005811003     10
+-25 0.05056964 0.002260190     10
+-20 0.05064315 0.003304430     10
+-15 0.05167218 0.003297155     10
+-10 0.05391400 0.003728028     10
+-5  0.07383315 0.004505916     10
+
+> oneway.test(shs_ratio ~ snr, data=Dataset) # Welch test
+
+	One-way analysis of means (not assuming equal variances)
+
+data:  shs_ratio and snr
+F = 42.629, num df = 5.000, denom df = 24.843, p-value = 2.107e-11
+
+
+> Dataset <- read.table("F:/卒論プログラム３/record_shs_3-3_p=5.095.0.txt", header=TRUE, 
++   stringsAsFactors=TRUE, sep="", na.strings="NA", dec=".", strip.white=TRUE)
+
+> Dataset <- within(Dataset, {
++   snr <- as.factor(snr)
++ })
+
+> AnovaModel.9 <- aov(shs_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.9)
+            Df   Sum Sq  Mean Sq F value Pr(>F)    
+snr          5 0.018579 0.003716   232.7 <2e-16 ***
+Residuals   54 0.000862 0.000016                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(shs_ratio, groups=snr, statistics=c("mean", "sd")))
+          mean          sd data:n
+-30 0.04990812 0.001050967     10
+-25 0.05038589 0.001601479     10
+-20 0.05185594 0.003497054     10
+-15 0.05600882 0.004636416     10
+-10 0.07059904 0.005327022     10
+-5  0.09900772 0.005479092     10
+
+> local({
++   .Pairs <- glht(AnovaModel.9, linfct = mcp(snr = "Tukey"))
++   print(summary(.Pairs)) # pairwise tests
++   print(confint(.Pairs, level=0.95)) # confidence intervals
++   print(cld(.Pairs, level=0.05)) # compact letter display
++   old.oma <- par(oma=c(0, 5, 0, 0))
++   plot(confint(.Pairs))
++   par(old.oma)
++ })
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = shs_ratio ~ snr, data = Dataset)
+
+Linear Hypotheses:
+                Estimate Std. Error t value Pr(>|t|)    
+-25 - -30 == 0 0.0004778  0.0017869   0.267   0.9998    
+-20 - -30 == 0 0.0019478  0.0017869   1.090   0.8833    
+-15 - -30 == 0 0.0061007  0.0017869   3.414   0.0147 *  
+-10 - -30 == 0 0.0206909  0.0017869  11.579   <0.001 ***
+-5 - -30 == 0  0.0490996  0.0017869  27.477   <0.001 ***
+-20 - -25 == 0 0.0014700  0.0017869   0.823   0.9620    
+-15 - -25 == 0 0.0056229  0.0017869   3.147   0.0304 *  
+-10 - -25 == 0 0.0202132  0.0017869  11.312   <0.001 ***
+-5 - -25 == 0  0.0486218  0.0017869  27.210   <0.001 ***
+-15 - -20 == 0 0.0041529  0.0017869   2.324   0.2024    
+-10 - -20 == 0 0.0187431  0.0017869  10.489   <0.001 ***
+-5 - -20 == 0  0.0471518  0.0017869  26.387   <0.001 ***
+-10 - -15 == 0 0.0145902  0.0017869   8.165   <0.001 ***
+-5 - -15 == 0  0.0429989  0.0017869  24.063   <0.001 ***
+-5 - -10 == 0  0.0284087  0.0017869  15.898   <0.001 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+(Adjusted p values reported -- single-step method)
+
+
+	 Simultaneous Confidence Intervals
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = shs_ratio ~ snr, data = Dataset)
+
+Quantile = 2.9547
+95% family-wise confidence level
+ 
+
+Linear Hypotheses:
+               Estimate   lwr        upr       
+-25 - -30 == 0  0.0004778 -0.0048020  0.0057576
+-20 - -30 == 0  0.0019478 -0.0033320  0.0072276
+-15 - -30 == 0  0.0061007  0.0008209  0.0113805
+-10 - -30 == 0  0.0206909  0.0154111  0.0259707
+-5 - -30 == 0   0.0490996  0.0438198  0.0543794
+-20 - -25 == 0  0.0014700 -0.0038098  0.0067499
+-15 - -25 == 0  0.0056229  0.0003431  0.0109027
+-10 - -25 == 0  0.0202132  0.0149333  0.0254930
+-5 - -25 == 0   0.0486218  0.0433420  0.0539016
+-15 - -20 == 0  0.0041529 -0.0011269  0.0094327
+-10 - -20 == 0  0.0187431  0.0134633  0.0240229
+-5 - -20 == 0   0.0471518  0.0418720  0.0524316
+-10 - -15 == 0  0.0145902  0.0093104  0.0198700
+-5 - -15 == 0   0.0429989  0.0377191  0.0482787
+-5 - -10 == 0   0.0284087  0.0231289  0.0336885
+
+ -30  -25  -20  -15  -10   -5 
+ "a"  "a" "ab"  "b"  "c"  "d" 
+
+> AnovaModel.10 <- aov(shs_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.10)
+            Df   Sum Sq  Mean Sq F value Pr(>F)    
+snr          5 0.018579 0.003716   232.7 <2e-16 ***
+Residuals   54 0.000862 0.000016                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(shs_ratio, groups=snr, statistics=c("mean", "sd")))
+          mean          sd data:n
+-30 0.04990812 0.001050967     10
+-25 0.05038589 0.001601479     10
+-20 0.05185594 0.003497054     10
+-15 0.05600882 0.004636416     10
+-10 0.07059904 0.005327022     10
+-5  0.09900772 0.005479092     10
+
+> oneway.test(shs_ratio ~ snr, data=Dataset) # Welch test
+
+	One-way analysis of means (not assuming equal variances)
+
+data:  shs_ratio and snr
+F = 164.47, num df = 5.000, denom df = 23.641, p-value < 2.2e-16
+
+
+> Dataset <- read.table("F:/卒論プログラム３/record_fovar_1-3_p=10.090.0.txt", header=TRUE,
++    stringsAsFactors=TRUE, sep="", na.strings="NA", dec=".", strip.white=TRUE)
+
+> Dataset <- within(Dataset, {
++   snr <- as.factor(snr)
++ })
+
+> AnovaModel.11 <- aov(fovar_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.11)
+            Df   Sum Sq   Mean Sq F value Pr(>F)    
+snr          5 0.009825 0.0019649   56.53 <2e-16 ***
+Residuals   54 0.001877 0.0000348                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(fovar_ratio, groups=snr, statistics=c("mean", "sd")))
+         mean          sd data:n
+-30 0.1010674 0.004584522     10
+-25 0.1026500 0.004018544     10
+-20 0.1022083 0.006367896     10
+-15 0.1036805 0.004517883     10
+-10 0.1136916 0.006971342     10
+-5  0.1370997 0.007861855     10
+
+> local({
++   .Pairs <- glht(AnovaModel.11, linfct = mcp(snr = "Tukey"))
++   print(summary(.Pairs)) # pairwise tests
++   print(confint(.Pairs, level=0.95)) # confidence intervals
++   print(cld(.Pairs, level=0.05)) # compact letter display
++   old.oma <- par(oma=c(0, 5, 0, 0))
++   plot(confint(.Pairs))
++   par(old.oma)
++ })
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = fovar_ratio ~ snr, data = Dataset)
+
+Linear Hypotheses:
+                 Estimate Std. Error t value Pr(>|t|)    
+-25 - -30 == 0  0.0015826  0.0026365   0.600 0.990579    
+-20 - -30 == 0  0.0011410  0.0026365   0.433 0.997967    
+-15 - -30 == 0  0.0026132  0.0026365   0.991 0.918801    
+-10 - -30 == 0  0.0126242  0.0026365   4.788 0.000192 ***
+-5 - -30 == 0   0.0360324  0.0026365  13.667 < 0.0001 ***
+-20 - -25 == 0 -0.0004417  0.0026365  -0.168 0.999981    
+-15 - -25 == 0  0.0010305  0.0026365   0.391 0.998753    
+-10 - -25 == 0  0.0110416  0.0026365   4.188 0.001409 ** 
+-5 - -25 == 0   0.0344498  0.0026365  13.066 < 0.0001 ***
+-15 - -20 == 0  0.0014722  0.0026365   0.558 0.993248    
+-10 - -20 == 0  0.0114833  0.0026365   4.355 0.000788 ***
+-5 - -20 == 0   0.0348914  0.0026365  13.234 < 0.0001 ***
+-10 - -15 == 0  0.0100110  0.0026365   3.797 0.004737 ** 
+-5 - -15 == 0   0.0334192  0.0026365  12.676 < 0.0001 ***
+-5 - -10 == 0   0.0234082  0.0026365   8.878 < 0.0001 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+(Adjusted p values reported -- single-step method)
+
+
+	 Simultaneous Confidence Intervals
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = fovar_ratio ~ snr, data = Dataset)
+
+Quantile = 2.9549
+95% family-wise confidence level
+ 
+
+Linear Hypotheses:
+               Estimate   lwr        upr       
+-25 - -30 == 0  0.0015826 -0.0062081  0.0093733
+-20 - -30 == 0  0.0011410 -0.0066497  0.0089317
+-15 - -30 == 0  0.0026132 -0.0051775  0.0104039
+-10 - -30 == 0  0.0126242  0.0048335  0.0204149
+-5 - -30 == 0   0.0360324  0.0282417  0.0438231
+-20 - -25 == 0 -0.0004417 -0.0082324  0.0073490
+-15 - -25 == 0  0.0010305 -0.0067601  0.0088212
+-10 - -25 == 0  0.0110416  0.0032509  0.0188323
+-5 - -25 == 0   0.0344498  0.0266591  0.0422405
+-15 - -20 == 0  0.0014722 -0.0063185  0.0092629
+-10 - -20 == 0  0.0114833  0.0036926  0.0192740
+-5 - -20 == 0   0.0348914  0.0271007  0.0426821
+-10 - -15 == 0  0.0100110  0.0022203  0.0178017
+-5 - -15 == 0   0.0334192  0.0256285  0.0412099
+-5 - -10 == 0   0.0234082  0.0156175  0.0311989
+
+-30 -25 -20 -15 -10  -5 
+"a" "a" "a" "a" "b" "c" 
+
+> Dataset <- read.table("F:/卒論プログラム３/record_fovar_1-3_p=5.095.0.txt", header=TRUE, 
++   stringsAsFactors=TRUE, sep="", na.strings="NA", dec=".", strip.white=TRUE)
+
+> Dataset <- within(Dataset, {
++   snr <- as.factor(snr)
++ })
+
+> AnovaModel.12 <- aov(fovar_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.12)
+            Df   Sum Sq   Mean Sq F value Pr(>F)    
+snr          5 0.007735 0.0015469   112.7 <2e-16 ***
+Residuals   54 0.000741 0.0000137                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(fovar_ratio, groups=snr, statistics=c("mean", "sd")))
+          mean          sd data:n
+-30 0.04858300 0.002743305     10
+-25 0.05207950 0.001886708     10
+-20 0.05068090 0.003509072     10
+-15 0.04942952 0.002939564     10
+-10 0.05921973 0.002884778     10
+-5  0.08100847 0.006478964     10
+
+> local({
++   .Pairs <- glht(AnovaModel.12, linfct = mcp(snr = "Tukey"))
++   print(summary(.Pairs)) # pairwise tests
++   print(confint(.Pairs, level=0.95)) # confidence intervals
++   print(cld(.Pairs, level=0.05)) # compact letter display
++   old.oma <- par(oma=c(0, 5, 0, 0))
++   plot(confint(.Pairs))
++   par(old.oma)
++ })
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = fovar_ratio ~ snr, data = Dataset)
+
+Linear Hypotheses:
+                 Estimate Std. Error t value Pr(>|t|)    
+-25 - -30 == 0  0.0034965  0.0016567   2.111    0.297    
+-20 - -30 == 0  0.0020979  0.0016567   1.266    0.802    
+-15 - -30 == 0  0.0008465  0.0016567   0.511    0.996    
+-10 - -30 == 0  0.0106367  0.0016567   6.420   <0.001 ***
+-5 - -30 == 0   0.0324255  0.0016567  19.572   <0.001 ***
+-20 - -25 == 0 -0.0013986  0.0016567  -0.844    0.958    
+-15 - -25 == 0 -0.0026500  0.0016567  -1.600    0.602    
+-10 - -25 == 0  0.0071402  0.0016567   4.310   <0.001 ***
+-5 - -25 == 0   0.0289290  0.0016567  17.462   <0.001 ***
+-15 - -20 == 0 -0.0012514  0.0016567  -0.755    0.974    
+-10 - -20 == 0  0.0085388  0.0016567   5.154   <0.001 ***
+-5 - -20 == 0   0.0303276  0.0016567  18.306   <0.001 ***
+-10 - -15 == 0  0.0097902  0.0016567   5.909   <0.001 ***
+-5 - -15 == 0   0.0315789  0.0016567  19.061   <0.001 ***
+-5 - -10 == 0   0.0217887  0.0016567  13.152   <0.001 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+(Adjusted p values reported -- single-step method)
+
+
+	 Simultaneous Confidence Intervals
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = fovar_ratio ~ snr, data = Dataset)
+
+Quantile = 2.9548
+95% family-wise confidence level
+ 
+
+Linear Hypotheses:
+               Estimate   lwr        upr       
+-25 - -30 == 0  0.0034965 -0.0013987  0.0083917
+-20 - -30 == 0  0.0020979 -0.0027973  0.0069931
+-15 - -30 == 0  0.0008465 -0.0040487  0.0057418
+-10 - -30 == 0  0.0106367  0.0057415  0.0155320
+-5 - -30 == 0   0.0324255  0.0275302  0.0373207
+-20 - -25 == 0 -0.0013986 -0.0062938  0.0034966
+-15 - -25 == 0 -0.0026500 -0.0075452  0.0022453
+-10 - -25 == 0  0.0071402  0.0022450  0.0120355
+-5 - -25 == 0   0.0289290  0.0240337  0.0338242
+-15 - -20 == 0 -0.0012514 -0.0061466  0.0036439
+-10 - -20 == 0  0.0085388  0.0036436  0.0134341
+-5 - -20 == 0   0.0303276  0.0254323  0.0352228
+-10 - -15 == 0  0.0097902  0.0048950  0.0146854
+-5 - -15 == 0   0.0315789  0.0266837  0.0364742
+-5 - -10 == 0   0.0217887  0.0168935  0.0266840
+
+-30 -25 -20 -15 -10  -5 
+"a" "a" "a" "a" "b" "c" 
+
+> Dataset <- read.table("F:/卒論プログラム３/record_fovar_1-3_p=1.099.0.txt", header=TRUE, 
++   stringsAsFactors=TRUE, sep="", na.strings="NA", dec=".", strip.white=TRUE)
+
+> Dataset <- within(Dataset, {
++   snr <- as.factor(snr)
++ })
+
+> AnovaModel.13 <- aov(fovar_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.13)
+            Df    Sum Sq   Mean Sq F value Pr(>F)    
+snr          5 0.0022874 0.0004575    91.3 <2e-16 ***
+Residuals   54 0.0002706 0.0000050                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(fovar_ratio, groups=snr, statistics=c("mean", "sd")))
+          mean          sd data:n
+-30 0.01004785 0.001239658     10
+-25 0.01023187 0.001135079     10
+-20 0.01008465 0.002236761     10
+-15 0.01008465 0.001870282     10
+-10 0.01306588 0.002182609     10
+-5  0.02701509 0.003738150     10
+
+> local({
++   .Pairs <- glht(AnovaModel.13, linfct = mcp(snr = "Tukey"))
++   print(summary(.Pairs)) # pairwise tests
++   print(confint(.Pairs, level=0.95)) # confidence intervals
++   print(cld(.Pairs, level=0.05)) # compact letter display
++   old.oma <- par(oma=c(0, 5, 0, 0))
++   plot(confint(.Pairs))
++   par(old.oma)
++ })
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = fovar_ratio ~ snr, data = Dataset)
+
+Linear Hypotheses:
+                 Estimate Std. Error t value Pr(>|t|)    
+-25 - -30 == 0  1.840e-04  1.001e-03   0.184   1.0000    
+-20 - -30 == 0  3.681e-05  1.001e-03   0.037   1.0000    
+-15 - -30 == 0  3.681e-05  1.001e-03   0.037   1.0000    
+-10 - -30 == 0  3.018e-03  1.001e-03   3.015   0.0430 *  
+-5 - -30 == 0   1.697e-02  1.001e-03  16.949   <0.001 ***
+-20 - -25 == 0 -1.472e-04  1.001e-03  -0.147   1.0000    
+-15 - -25 == 0 -1.472e-04  1.001e-03  -0.147   1.0000    
+-10 - -25 == 0  2.834e-03  1.001e-03   2.831   0.0676 .  
+-5 - -25 == 0   1.678e-02  1.001e-03  16.765   <0.001 ***
+-15 - -20 == 0 -4.899e-18  1.001e-03   0.000   1.0000    
+-10 - -20 == 0  2.981e-03  1.001e-03   2.978   0.0472 *  
+-5 - -20 == 0   1.693e-02  1.001e-03  16.912   <0.001 ***
+-10 - -15 == 0  2.981e-03  1.001e-03   2.978   0.0471 *  
+-5 - -15 == 0   1.693e-02  1.001e-03  16.912   <0.001 ***
+-5 - -10 == 0   1.395e-02  1.001e-03  13.934   <0.001 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+(Adjusted p values reported -- single-step method)
+
+
+	 Simultaneous Confidence Intervals
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = fovar_ratio ~ snr, data = Dataset)
+
+Quantile = 2.9549
+95% family-wise confidence level
+ 
+
+Linear Hypotheses:
+               Estimate   lwr        upr       
+-25 - -30 == 0  1.840e-04 -2.774e-03  3.142e-03
+-20 - -30 == 0  3.681e-05 -2.921e-03  2.995e-03
+-15 - -30 == 0  3.681e-05 -2.921e-03  2.995e-03
+-10 - -30 == 0  3.018e-03  6.000e-05  5.976e-03
+-5 - -30 == 0   1.697e-02  1.401e-02  1.993e-02
+-20 - -25 == 0 -1.472e-04 -3.105e-03  2.811e-03
+-15 - -25 == 0 -1.472e-04 -3.105e-03  2.811e-03
+-10 - -25 == 0  2.834e-03 -1.240e-04  5.792e-03
+-5 - -25 == 0   1.678e-02  1.383e-02  1.974e-02
+-15 - -20 == 0 -4.899e-18 -2.958e-03  2.958e-03
+-10 - -20 == 0  2.981e-03  2.319e-05  5.939e-03
+-5 - -20 == 0   1.693e-02  1.397e-02  1.989e-02
+-10 - -15 == 0  2.981e-03  2.319e-05  5.939e-03
+-5 - -15 == 0   1.693e-02  1.397e-02  1.989e-02
+-5 - -10 == 0   1.395e-02  1.099e-02  1.691e-02
+
+ -30  -25  -20  -15  -10   -5 
+ "a" "ab"  "a"  "a"  "b"  "c" 
+
+> Dataset <- read.table("F:/卒論プログラム３/record_fovar_2-3_p=5.095.0.txt", header=TRUE, 
++   stringsAsFactors=TRUE, sep="", na.strings="NA", dec=".", strip.white=TRUE)
+
+> Dataset <- within(Dataset, {
++   snr <- as.factor(snr)
++ })
+
+> AnovaModel.14 <- aov(fovar_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.14)
+            Df   Sum Sq   Mean Sq F value   Pr(>F)    
+snr          5 0.008988 0.0017976   35.38 7.06e-16 ***
+Residuals   54 0.002744 0.0000508                     
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(fovar_ratio, groups=snr, statistics=c("mean", "sd")))
+          mean          sd data:n
+-30 0.04924549 0.006779461     10
+-25 0.04803092 0.009095618     10
+-20 0.05112256 0.006352277     10
+-15 0.05023923 0.008904973     10
+-10 0.05947736 0.004978022     10
+-5  0.08292234 0.005632935     10
+
+> local({
++   .Pairs <- glht(AnovaModel.14, linfct = mcp(snr = "Tukey"))
++   print(summary(.Pairs)) # pairwise tests
++   print(confint(.Pairs, level=0.95)) # confidence intervals
++   print(cld(.Pairs, level=0.05)) # compact letter display
++   old.oma <- par(oma=c(0, 5, 0, 0))
++   plot(confint(.Pairs))
++   par(old.oma)
++ })
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = fovar_ratio ~ snr, data = Dataset)
+
+Linear Hypotheses:
+                 Estimate Std. Error t value Pr(>|t|)    
+-25 - -30 == 0 -0.0012146  0.0031877  -0.381  0.99890    
+-20 - -30 == 0  0.0018771  0.0031877   0.589  0.99137    
+-15 - -30 == 0  0.0009937  0.0031877   0.312  0.99958    
+-10 - -30 == 0  0.0102319  0.0031877   3.210  0.02572 *  
+-5 - -30 == 0   0.0336768  0.0031877  10.564  < 0.001 ***
+-20 - -25 == 0  0.0030916  0.0031877   0.970  0.92546    
+-15 - -25 == 0  0.0022083  0.0031877   0.693  0.98201    
+-10 - -25 == 0  0.0114464  0.0031877   3.591  0.00882 ** 
+-5 - -25 == 0   0.0348914  0.0031877  10.945  < 0.001 ***
+-15 - -20 == 0 -0.0008833  0.0031877  -0.277  0.99977    
+-10 - -20 == 0  0.0083548  0.0031877   2.621  0.10960    
+-5 - -20 == 0   0.0317998  0.0031877   9.976  < 0.001 ***
+-10 - -15 == 0  0.0092381  0.0031877   2.898  0.05743 .  
+-5 - -15 == 0   0.0326831  0.0031877  10.253  < 0.001 ***
+-5 - -10 == 0   0.0234450  0.0031877   7.355  < 0.001 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+(Adjusted p values reported -- single-step method)
+
+
+	 Simultaneous Confidence Intervals
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = fovar_ratio ~ snr, data = Dataset)
+
+Quantile = 2.9548
+95% family-wise confidence level
+ 
+
+Linear Hypotheses:
+               Estimate   lwr        upr       
+-25 - -30 == 0 -0.0012146 -0.0106338  0.0082046
+-20 - -30 == 0  0.0018771 -0.0075421  0.0112963
+-15 - -30 == 0  0.0009937 -0.0084255  0.0104130
+-10 - -30 == 0  0.0102319  0.0008127  0.0196511
+-5 - -30 == 0   0.0336768  0.0242576  0.0430961
+-20 - -25 == 0  0.0030916 -0.0063276  0.0125109
+-15 - -25 == 0  0.0022083 -0.0072109  0.0116275
+-10 - -25 == 0  0.0114464  0.0020272  0.0208657
+-5 - -25 == 0   0.0348914  0.0254722  0.0443106
+-15 - -20 == 0 -0.0008833 -0.0103025  0.0085359
+-10 - -20 == 0  0.0083548 -0.0010644  0.0177740
+-5 - -20 == 0   0.0317998  0.0223806  0.0412190
+-10 - -15 == 0  0.0092381 -0.0001811  0.0186573
+-5 - -15 == 0   0.0326831  0.0232639  0.0421023
+-5 - -10 == 0   0.0234450  0.0140258  0.0328642
+
+ -30  -25  -20  -15  -10   -5 
+ "a"  "a" "ab" "ab"  "b"  "c" 
+
+> Dataset <- read.table("F:/卒論プログラム３/record_fovar_3-3_p=5.095.0.txt", header=TRUE, 
++   stringsAsFactors=TRUE, sep="", na.strings="NA", dec=".", strip.white=TRUE)
+
+> Dataset <- within(Dataset, {
++   snr <- as.factor(snr)
++ })
+
+> AnovaModel.15 <- aov(fovar_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.15)
+            Df  Sum Sq  Mean Sq F value Pr(>F)    
+snr          5 0.03569 0.007137   246.4 <2e-16 ***
+Residuals   54 0.00156 0.000029                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(fovar_ratio, groups=snr, statistics=c("mean", "sd")))
+          mean          sd data:n
+-30 0.04880383 0.003734121     10
+-25 0.05075451 0.004215952     10
+-20 0.05263158 0.003937384     10
+-15 0.05627530 0.005429943     10
+-10 0.07280088 0.004906760     10
+-5  0.11818182 0.008543006     10
+
+> local({
++   .Pairs <- glht(AnovaModel.15, linfct = mcp(snr = "Tukey"))
++   print(summary(.Pairs)) # pairwise tests
++   print(confint(.Pairs, level=0.95)) # confidence intervals
++   print(cld(.Pairs, level=0.05)) # compact letter display
++   old.oma <- par(oma=c(0, 5, 0, 0))
++   plot(confint(.Pairs))
++   par(old.oma)
++ })
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = fovar_ratio ~ snr, data = Dataset)
+
+Linear Hypotheses:
+               Estimate Std. Error t value Pr(>|t|)    
+-25 - -30 == 0 0.001951   0.002407   0.811   0.9644    
+-20 - -30 == 0 0.003828   0.002407   1.590   0.6083    
+-15 - -30 == 0 0.007471   0.002407   3.104   0.0342 *  
+-10 - -30 == 0 0.023997   0.002407   9.971   <0.001 ***
+-5 - -30 == 0  0.069378   0.002407  28.827   <0.001 ***
+-20 - -25 == 0 0.001877   0.002407   0.780   0.9698    
+-15 - -25 == 0 0.005521   0.002407   2.294   0.2146    
+-10 - -25 == 0 0.022046   0.002407   9.160   <0.001 ***
+-5 - -25 == 0  0.067427   0.002407  28.017   <0.001 ***
+-15 - -20 == 0 0.003644   0.002407   1.514   0.6570    
+-10 - -20 == 0 0.020169   0.002407   8.381   <0.001 ***
+-5 - -20 == 0  0.065550   0.002407  27.237   <0.001 ***
+-10 - -15 == 0 0.016526   0.002407   6.867   <0.001 ***
+-5 - -15 == 0  0.061907   0.002407  25.723   <0.001 ***
+-5 - -10 == 0  0.045381   0.002407  18.856   <0.001 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+(Adjusted p values reported -- single-step method)
+
+
+	 Simultaneous Confidence Intervals
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = fovar_ratio ~ snr, data = Dataset)
+
+Quantile = 2.9552
+95% family-wise confidence level
+ 
+
+Linear Hypotheses:
+               Estimate   lwr        upr       
+-25 - -30 == 0  0.0019507 -0.0051616  0.0090630
+-20 - -30 == 0  0.0038278 -0.0032846  0.0109401
+-15 - -30 == 0  0.0074715  0.0003592  0.0145838
+-10 - -30 == 0  0.0239971  0.0168847  0.0311094
+-5 - -30 == 0   0.0693780  0.0622657  0.0764903
+-20 - -25 == 0  0.0018771 -0.0052352  0.0089894
+-15 - -25 == 0  0.0055208 -0.0015915  0.0126331
+-10 - -25 == 0  0.0220464  0.0149341  0.0291587
+-5 - -25 == 0   0.0674273  0.0603150  0.0745396
+-15 - -20 == 0  0.0036437 -0.0034686  0.0107560
+-10 - -20 == 0  0.0201693  0.0130570  0.0272816
+-5 - -20 == 0   0.0655502  0.0584379  0.0726626
+-10 - -15 == 0  0.0165256  0.0094133  0.0236379
+-5 - -15 == 0   0.0619065  0.0547942  0.0690188
+-5 - -10 == 0   0.0453809  0.0382686  0.0524933
+
+ -30  -25  -20  -15  -10   -5 
+ "a" "ab" "ab"  "b"  "c"  "d" 
+
+> Dataset <- read.table("F:/卒論プログラム３/record_total_1-3_p=10.090.0.txt", header=TRUE,
++    stringsAsFactors=TRUE, sep="", na.strings="NA", dec=".", strip.white=TRUE)
+
+> Dataset <- within(Dataset, {
++   snr <- as.factor(snr)
++ })
+
+> AnovaModel.16 <- aov(total_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.16)
+            Df   Sum Sq  Mean Sq F value Pr(>F)    
+snr          5 0.007604 0.001521   108.5 <2e-16 ***
+Residuals   54 0.000757 0.000014                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(total_ratio, groups=snr, statistics=c("mean", "sd")))
+         mean          sd data:n
+-30 0.1006991 0.002418094     10
+-25 0.1014904 0.002554097     10
+-20 0.1020046 0.003670478     10
+-15 0.1028325 0.002024517     10
+-10 0.1110354 0.005242871     10
+-5  0.1323683 0.005165653     10
+
+> local({
++   .Pairs <- glht(AnovaModel.16, linfct = mcp(snr = "Tukey"))
++   print(summary(.Pairs)) # pairwise tests
++   print(confint(.Pairs, level=0.95)) # confidence intervals
++   print(cld(.Pairs, level=0.05)) # compact letter display
++   old.oma <- par(oma=c(0, 5, 0, 0))
++   plot(confint(.Pairs))
++   par(old.oma)
++ })
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = total_ratio ~ snr, data = Dataset)
+
+Linear Hypotheses:
+                Estimate Std. Error t value Pr(>|t|)    
+-25 - -30 == 0 0.0007913  0.0016744   0.473 0.996910    
+-20 - -30 == 0 0.0013055  0.0016744   0.780 0.969827    
+-15 - -30 == 0 0.0021335  0.0016744   1.274 0.797563    
+-10 - -30 == 0 0.0103364  0.0016744   6.173 < 0.0001 ***
+-5 - -30 == 0  0.0316693  0.0016744  18.913 < 0.0001 ***
+-20 - -25 == 0 0.0005142  0.0016744   0.307 0.999613    
+-15 - -25 == 0 0.0013422  0.0016744   0.802 0.966028    
+-10 - -25 == 0 0.0095451  0.0016744   5.700 < 0.0001 ***
+-5 - -25 == 0  0.0308779  0.0016744  18.441 < 0.0001 ***
+-15 - -20 == 0 0.0008280  0.0016744   0.494 0.996174    
+-10 - -20 == 0 0.0090309  0.0016744   5.393 < 0.0001 ***
+-5 - -20 == 0  0.0303638  0.0016744  18.134 < 0.0001 ***
+-10 - -15 == 0 0.0082029  0.0016744   4.899 0.000116 ***
+-5 - -15 == 0  0.0295358  0.0016744  17.639 < 0.0001 ***
+-5 - -10 == 0  0.0213329  0.0016744  12.740 < 0.0001 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+(Adjusted p values reported -- single-step method)
+
+
+	 Simultaneous Confidence Intervals
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = total_ratio ~ snr, data = Dataset)
+
+Quantile = 2.9544
+95% family-wise confidence level
+ 
+
+Linear Hypotheses:
+               Estimate   lwr        upr       
+-25 - -30 == 0  0.0007913 -0.0041556  0.0057383
+-20 - -30 == 0  0.0013055 -0.0036414  0.0062525
+-15 - -30 == 0  0.0021335 -0.0028135  0.0070804
+-10 - -30 == 0  0.0103364  0.0053894  0.0152833
+-5 - -30 == 0   0.0316693  0.0267223  0.0366162
+-20 - -25 == 0  0.0005142 -0.0044328  0.0054611
+-15 - -25 == 0  0.0013422 -0.0036048  0.0062891
+-10 - -25 == 0  0.0095451  0.0045981  0.0144920
+-5 - -25 == 0   0.0308779  0.0259310  0.0358249
+-15 - -20 == 0  0.0008280 -0.0041190  0.0057749
+-10 - -20 == 0  0.0090309  0.0040839  0.0139778
+-5 - -20 == 0   0.0303638  0.0254168  0.0353107
+-10 - -15 == 0  0.0082029  0.0032559  0.0131498
+-5 - -15 == 0   0.0295358  0.0245888  0.0344827
+-5 - -10 == 0   0.0213329  0.0163859  0.0262799
+
+-30 -25 -20 -15 -10  -5 
+"a" "a" "a" "a" "b" "c" 
+
+> Dataset <- read.table("F:/卒論プログラム３/record_total_1-3_p=5.095.0.txt", header=TRUE, 
++   stringsAsFactors=TRUE, sep="", na.strings="NA", dec=".", strip.white=TRUE)
+
+> Dataset <- within(Dataset, {
++   snr <- as.factor(snr)
++ })
+
+> AnovaModel.17 <- aov(total_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.17)
+            Df   Sum Sq   Mean Sq F value Pr(>F)    
+snr          5 0.005713 0.0011425   222.8 <2e-16 ***
+Residuals   54 0.000277 0.0000051                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(total_ratio, groups=snr, statistics=c("mean", "sd")))
+          mean          sd data:n
+-30 0.04939256 0.001352476     10
+-25 0.05106731 0.001400792     10
+-20 0.05077228 0.002142679     10
+-15 0.05031197 0.001332428     10
+-10 0.05763265 0.001796108     10
+-5  0.07699817 0.004169107     10
+
+> local({
++   .Pairs <- glht(AnovaModel.17, linfct = mcp(snr = "Tukey"))
++   print(summary(.Pairs)) # pairwise tests
++   print(confint(.Pairs, level=0.95)) # confidence intervals
++   print(cld(.Pairs, level=0.05)) # compact letter display
++   old.oma <- par(oma=c(0, 5, 0, 0))
++   plot(confint(.Pairs))
++   par(old.oma)
++ })
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = total_ratio ~ snr, data = Dataset)
+
+Linear Hypotheses:
+                 Estimate Std. Error t value Pr(>|t|)    
+-25 - -30 == 0  0.0016747  0.0010127   1.654    0.568    
+-20 - -30 == 0  0.0013797  0.0010127   1.362    0.749    
+-15 - -30 == 0  0.0009194  0.0010127   0.908    0.943    
+-10 - -30 == 0  0.0082401  0.0010127   8.137   <0.001 ***
+-5 - -30 == 0   0.0276056  0.0010127  27.260   <0.001 ***
+-20 - -25 == 0 -0.0002950  0.0010127  -0.291    1.000    
+-15 - -25 == 0 -0.0007553  0.0010127  -0.746    0.975    
+-10 - -25 == 0  0.0065653  0.0010127   6.483   <0.001 ***
+-5 - -25 == 0   0.0259309  0.0010127  25.606   <0.001 ***
+-15 - -20 == 0 -0.0004603  0.0010127  -0.455    0.997    
+-10 - -20 == 0  0.0068604  0.0010127   6.775   <0.001 ***
+-5 - -20 == 0   0.0262259  0.0010127  25.898   <0.001 ***
+-10 - -15 == 0  0.0073207  0.0010127   7.229   <0.001 ***
+-5 - -15 == 0   0.0266862  0.0010127  26.352   <0.001 ***
+-5 - -10 == 0   0.0193655  0.0010127  19.123   <0.001 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+(Adjusted p values reported -- single-step method)
+
+
+	 Simultaneous Confidence Intervals
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = total_ratio ~ snr, data = Dataset)
+
+Quantile = 2.9539
+95% family-wise confidence level
+ 
+
+Linear Hypotheses:
+               Estimate   lwr        upr       
+-25 - -30 == 0  0.0016747 -0.0013166  0.0046661
+-20 - -30 == 0  0.0013797 -0.0016116  0.0043711
+-15 - -30 == 0  0.0009194 -0.0020720  0.0039108
+-10 - -30 == 0  0.0082401  0.0052487  0.0112314
+-5 - -30 == 0   0.0276056  0.0246142  0.0305970
+-20 - -25 == 0 -0.0002950 -0.0032864  0.0026963
+-15 - -25 == 0 -0.0007553 -0.0037467  0.0022360
+-10 - -25 == 0  0.0065653  0.0035740  0.0095567
+-5 - -25 == 0   0.0259309  0.0229395  0.0289222
+-15 - -20 == 0 -0.0004603 -0.0034517  0.0025311
+-10 - -20 == 0  0.0068604  0.0038690  0.0098517
+-5 - -20 == 0   0.0262259  0.0232345  0.0292173
+-10 - -15 == 0  0.0073207  0.0043293  0.0103120
+-5 - -15 == 0   0.0266862  0.0236948  0.0296776
+-5 - -10 == 0   0.0193655  0.0163742  0.0223569
+
+-30 -25 -20 -15 -10  -5 
+"a" "a" "a" "a" "b" "c" 
+
+> Dataset <- read.table("F:/卒論プログラム３/record_total_1-3_p=1.099.0.txt", header=TRUE, 
++   stringsAsFactors=TRUE, sep="", na.strings="NA", dec=".", strip.white=TRUE)
+
+> Dataset <- within(Dataset, {
++   snr <- as.factor(snr)
++ })
+
+> AnovaModel.18 <- aov(total_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.18)
+            Df    Sum Sq   Mean Sq F value Pr(>F)    
+snr          5 0.0017155 0.0003431   150.5 <2e-16 ***
+Residuals   54 0.0001231 0.0000023                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(total_ratio, groups=snr, statistics=c("mean", "sd")))
+          mean           sd data:n
+-30 0.01016909 0.0006075299     10
+-25 0.01026110 0.0007840477     10
+-20 0.01016912 0.0013712725     10
+-15 0.01059176 0.0012081421     10
+-10 0.01252339 0.0019794700     10
+-5  0.02491879 0.0023321055     10
+
+> local({
++   .Pairs <- glht(AnovaModel.18, linfct = mcp(snr = "Tukey"))
++   print(summary(.Pairs)) # pairwise tests
++   print(confint(.Pairs, level=0.95)) # confidence intervals
++   print(cld(.Pairs, level=0.05)) # compact letter display
++   old.oma <- par(oma=c(0, 5, 0, 0))
++   plot(confint(.Pairs))
++   par(old.oma)
++ })
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = total_ratio ~ snr, data = Dataset)
+
+Linear Hypotheses:
+                     Estimate     Std. Error t value Pr(>|t|)    
+-25 - -30 == 0  0.00009201325  0.00067529837   0.136   1.0000    
+-20 - -30 == 0  0.00000002705  0.00067529837   0.000   1.0000    
+-15 - -30 == 0  0.00042266579  0.00067529837   0.626   0.9886    
+-10 - -30 == 0  0.00235429477  0.00067529837   3.486   0.0119 *  
+-5 - -30 == 0   0.01474970029  0.00067529837  21.842   <0.001 ***
+-20 - -25 == 0 -0.00009198620  0.00067529837  -0.136   1.0000    
+-15 - -25 == 0  0.00033065254  0.00067529837   0.490   0.9963    
+-10 - -25 == 0  0.00226228152  0.00067529837   3.350   0.0177 *  
+-5 - -25 == 0   0.01465768704  0.00067529837  21.705   <0.001 ***
+-15 - -20 == 0  0.00042263874  0.00067529837   0.626   0.9886    
+-10 - -20 == 0  0.00235426772  0.00067529837   3.486   0.0120 *  
+-5 - -20 == 0   0.01474967324  0.00067529837  21.842   <0.001 ***
+-10 - -15 == 0  0.00193162898  0.00067529837   2.860   0.0629 .  
+-5 - -15 == 0   0.01432703450  0.00067529837  21.216   <0.001 ***
+-5 - -10 == 0   0.01239540552  0.00067529837  18.355   <0.001 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+(Adjusted p values reported -- single-step method)
+
+
+	 Simultaneous Confidence Intervals
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = total_ratio ~ snr, data = Dataset)
+
+Quantile = 2.9546
+95% family-wise confidence level
+ 
+
+Linear Hypotheses:
+               Estimate       lwr            upr           
+-25 - -30 == 0  0.00009201325 -0.00190321777  0.00208724427
+-20 - -30 == 0  0.00000002705 -0.00199520397  0.00199525807
+-15 - -30 == 0  0.00042266579 -0.00157256523  0.00241789681
+-10 - -30 == 0  0.00235429477  0.00035906375  0.00434952579
+-5 - -30 == 0   0.01474970029  0.01275446927  0.01674493131
+-20 - -25 == 0 -0.00009198620 -0.00208721721  0.00190324482
+-15 - -25 == 0  0.00033065254 -0.00166457848  0.00232588356
+-10 - -25 == 0  0.00226228152  0.00026705050  0.00425751254
+-5 - -25 == 0   0.01465768704  0.01266245602  0.01665291806
+-15 - -20 == 0  0.00042263874 -0.00157259228  0.00241786975
+-10 - -20 == 0  0.00235426772  0.00035903670  0.00434949874
+-5 - -20 == 0   0.01474967324  0.01275444222  0.01674490425
+-10 - -15 == 0  0.00193162898 -0.00006360204  0.00392686000
+-5 - -15 == 0   0.01432703450  0.01233180348  0.01632226552
+-5 - -10 == 0   0.01239540552  0.01040017450  0.01439063654
+
+ -30  -25  -20  -15  -10   -5 
+ "a"  "a"  "a" "ab"  "b"  "c" 
+
+> Dataset <- read.table("F:/卒論プログラム３/record_total_2-3_p=5.095.0.txt", header=TRUE, 
++   stringsAsFactors=TRUE, sep="", na.strings="NA", dec=".", strip.white=TRUE)
+
+> Dataset <- within(Dataset, {
++   snr <- as.factor(snr)
++ })
+
+> AnovaModel.19 <- aov(total_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.19)
+            Df   Sum Sq   Mean Sq F value Pr(>F)    
+snr          5 0.006426 0.0012852   84.24 <2e-16 ***
+Residuals   54 0.000824 0.0000153                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(total_ratio, groups=snr, statistics=c("mean", "sd")))
+          mean          sd data:n
+-30 0.04930117 0.005015167     10
+-25 0.04930028 0.005178238     10
+-20 0.05088285 0.002520627     10
+-15 0.05095571 0.003854212     10
+-10 0.05669568 0.003335576     10
+-5  0.07837775 0.002690595     10
+
+> local({
++   .Pairs <- glht(AnovaModel.19, linfct = mcp(snr = "Tukey"))
++   print(summary(.Pairs)) # pairwise tests
++   print(confint(.Pairs, level=0.95)) # confidence intervals
++   print(cld(.Pairs, level=0.05)) # compact letter display
++   old.oma <- par(oma=c(0, 5, 0, 0))
++   plot(confint(.Pairs))
++   par(old.oma)
++ })
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = total_ratio ~ snr, data = Dataset)
+
+Linear Hypotheses:
+                    Estimate    Std. Error t value Pr(>|t|)    
+-25 - -30 == 0 -0.0000008927  0.0017468059  -0.001  1.00000    
+-20 - -30 == 0  0.0015816811  0.0017468059   0.905  0.94344    
+-15 - -30 == 0  0.0016545342  0.0017468059   0.947  0.93215    
+-10 - -30 == 0  0.0073945107  0.0017468059   4.233  0.00118 ** 
+-5 - -30 == 0   0.0290765725  0.0017468059  16.646  < 0.001 ***
+-20 - -25 == 0  0.0015825738  0.0017468059   0.906  0.94333    
+-15 - -25 == 0  0.0016554269  0.0017468059   0.948  0.93201    
+-10 - -25 == 0  0.0073954035  0.0017468059   4.234  0.00122 ** 
+-5 - -25 == 0   0.0290774652  0.0017468059  16.646  < 0.001 ***
+-15 - -20 == 0  0.0000728531  0.0017468059   0.042  1.00000    
+-10 - -20 == 0  0.0058128297  0.0017468059   3.328  0.01883 *  
+-5 - -20 == 0   0.0274948914  0.0017468059  15.740  < 0.001 ***
+-10 - -15 == 0  0.0057399766  0.0017468059   3.286  0.02087 *  
+-5 - -15 == 0   0.0274220383  0.0017468059  15.698  < 0.001 ***
+-5 - -10 == 0   0.0216820617  0.0017468059  12.412  < 0.001 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+(Adjusted p values reported -- single-step method)
+
+
+	 Simultaneous Confidence Intervals
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = total_ratio ~ snr, data = Dataset)
+
+Quantile = 2.955
+95% family-wise confidence level
+ 
+
+Linear Hypotheses:
+               Estimate      lwr           upr          
+-25 - -30 == 0 -0.0000008927 -0.0051627327  0.0051609473
+-20 - -30 == 0  0.0015816811 -0.0035801589  0.0067435210
+-15 - -30 == 0  0.0016545342 -0.0035073058  0.0068163742
+-10 - -30 == 0  0.0073945107  0.0022326708  0.0125563507
+-5 - -30 == 0   0.0290765725  0.0239147325  0.0342384125
+-20 - -25 == 0  0.0015825738 -0.0035792662  0.0067444138
+-15 - -25 == 0  0.0016554269 -0.0035064131  0.0068172669
+-10 - -25 == 0  0.0073954035  0.0022335635  0.0125572435
+-5 - -25 == 0   0.0290774652  0.0239156252  0.0342393052
+-15 - -20 == 0  0.0000728531 -0.0050889869  0.0052346931
+-10 - -20 == 0  0.0058128297  0.0006509897  0.0109746697
+-5 - -20 == 0   0.0274948914  0.0223330514  0.0326567314
+-10 - -15 == 0  0.0057399766  0.0005781366  0.0109018166
+-5 - -15 == 0   0.0274220383  0.0222601983  0.0325838783
+-5 - -10 == 0   0.0216820617  0.0165202217  0.0268439017
+
+-30 -25 -20 -15 -10  -5 
+"a" "a" "a" "a" "b" "c" 
+
+> Dataset <- read.table("F:/卒論プログラム３/record_total_3-3_p=5.095.0.txt", header=TRUE, 
++   stringsAsFactors=TRUE, sep="", na.strings="NA", dec=".", strip.white=TRUE)
+
+> Dataset <- within(Dataset, {
++   snr <- as.factor(snr)
++ })
+
+> AnovaModel.20 <- aov(total_ratio ~ snr, data=Dataset)
+
+> summary(AnovaModel.20)
+            Df  Sum Sq  Mean Sq F value Pr(>F)    
+snr          5 0.02639 0.005278   432.1 <2e-16 ***
+Residuals   54 0.00066 0.000012                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+> with(Dataset, numSummary(total_ratio, groups=snr, statistics=c("mean", "sd")))
+          mean          sd data:n
+-30 0.04935597 0.001687235     10
+-25 0.05057020 0.002039901     10
+-20 0.05224376 0.003013683     10
+-15 0.05614206 0.002579491     10
+-10 0.07169996 0.003105333     10
+-5  0.10859477 0.006395695     10
+
+> local({
++   .Pairs <- glht(AnovaModel.20, linfct = mcp(snr = "Tukey"))
++   print(summary(.Pairs)) # pairwise tests
++   print(confint(.Pairs, level=0.95)) # confidence intervals
++   print(cld(.Pairs, level=0.05)) # compact letter display
++   old.oma <- par(oma=c(0, 5, 0, 0))
++   plot(confint(.Pairs))
++   par(old.oma)
++ })
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = total_ratio ~ snr, data = Dataset)
+
+Linear Hypotheses:
+               Estimate Std. Error t value Pr(>|t|)    
+-25 - -30 == 0 0.001214   0.001563   0.777  0.97030    
+-20 - -30 == 0 0.002888   0.001563   1.848  0.44491    
+-15 - -30 == 0 0.006786   0.001563   4.342  < 0.001 ***
+-10 - -30 == 0 0.022344   0.001563  14.295  < 0.001 ***
+-5 - -30 == 0  0.059239   0.001563  37.900  < 0.001 ***
+-20 - -25 == 0 0.001674   0.001563   1.071  0.89080    
+-15 - -25 == 0 0.005572   0.001563   3.565  0.00951 ** 
+-10 - -25 == 0 0.021130   0.001563  13.518  < 0.001 ***
+-5 - -25 == 0  0.058025   0.001563  37.123  < 0.001 ***
+-15 - -20 == 0 0.003898   0.001563   2.494  0.14415    
+-10 - -20 == 0 0.019456   0.001563  12.448  < 0.001 ***
+-5 - -20 == 0  0.056351   0.001563  36.052  < 0.001 ***
+-10 - -15 == 0 0.015558   0.001563   9.954  < 0.001 ***
+-5 - -15 == 0  0.052453   0.001563  33.558  < 0.001 ***
+-5 - -10 == 0  0.036895   0.001563  23.605  < 0.001 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+(Adjusted p values reported -- single-step method)
+
+
+	 Simultaneous Confidence Intervals
+
+Multiple Comparisons of Means: Tukey Contrasts
+
+
+Fit: aov(formula = total_ratio ~ snr, data = Dataset)
+
+Quantile = 2.9543
+95% family-wise confidence level
+ 
+
+Linear Hypotheses:
+               Estimate   lwr        upr       
+-25 - -30 == 0  0.0012142 -0.0034034  0.0058318
+-20 - -30 == 0  0.0028878 -0.0017298  0.0075054
+-15 - -30 == 0  0.0067861  0.0021685  0.0114037
+-10 - -30 == 0  0.0223440  0.0177264  0.0269616
+-5 - -30 == 0   0.0592388  0.0546212  0.0638564
+-20 - -25 == 0  0.0016736 -0.0029440  0.0062912
+-15 - -25 == 0  0.0055719  0.0009543  0.0101895
+-10 - -25 == 0  0.0211298  0.0165122  0.0257474
+-5 - -25 == 0   0.0580246  0.0534070  0.0626422
+-15 - -20 == 0  0.0038983 -0.0007193  0.0085159
+-10 - -20 == 0  0.0194562  0.0148386  0.0240738
+-5 - -20 == 0   0.0563510  0.0517334  0.0609686
+-10 - -15 == 0  0.0155579  0.0109403  0.0201755
+-5 - -15 == 0   0.0524527  0.0478351  0.0570703
+-5 - -10 == 0   0.0368948  0.0322772  0.0415124
+
+ -30  -25  -20  -15  -10   -5 
+ "a"  "a" "ab"  "b"  "c"  "d" 
+
